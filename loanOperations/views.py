@@ -176,3 +176,6 @@ def acceptOffer(request, pk_borrower, pk_loan, pk_investor):
 			return Response("Scheduled payment created successfully, Please following your payments date", status=status.HTTP_201_CREATED)
 	return Response("Sorry, Please Enter valid data", status=status.HTTP_400_BAD_REQUEST)
 
+# for converting the QuerySet return by objects into list to be able to display it.
+def querySet_to_list(qs):
+    return [dict(q) for q in qs]
