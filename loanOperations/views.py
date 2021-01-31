@@ -179,3 +179,11 @@ def acceptOffer(request, pk_borrower, pk_loan, pk_investor):
 # for converting the QuerySet return by objects into list to be able to display it.
 def querySet_to_list(qs):
     return [dict(q) for q in qs]
+
+# set the scheduled for 6 months to assignit for borrower.
+def scheduled_date():
+	scheduled_date = []
+	scheduled_date.append(date.today() + relativedelta(months=+1))
+	for i in range(1,6):
+		scheduled_date.append(scheduled_date[i-1]+relativedelta(months=+1))
+	return scheduled_date
