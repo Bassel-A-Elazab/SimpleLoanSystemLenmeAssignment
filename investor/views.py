@@ -26,3 +26,15 @@ def investorCreate(request):
 		investor.save()
 	return Response(investor.data)
 
+# Dsiplay investor information
+@api_view(['GET'])
+def investorDetail(request,pk):
+	try:
+		investor = Investor.objects.get(id=pk)
+	except ObjectDoesNotExist:
+		return Response("Sorry! You aren't register, Please create a new account", status=status.HTTP_401_UNAUTHORIZED)
+		
+	serializer = InvestorSerializer(investor, many=False)
+	return Response(serializer.data, status=status.HTTP_200_OK)
+
+
