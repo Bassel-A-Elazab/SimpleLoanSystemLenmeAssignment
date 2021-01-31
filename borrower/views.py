@@ -48,3 +48,14 @@ def borrowerUpdate(request, pk):
 	if serializer.is_valid():
 		serializer.save()
 	return Response("Your information updated successfully", status=status.HTTP_200_OK)
+
+# Delete borrower information
+@api_view(['DELETE'])
+def borrowerDelete(request, pk):
+	try:
+		borrower = Borrower.objects.get(id=pk)
+	except ObjectDoesNotExist:
+		return Response("Sorry! You aren't register, Please create a new account", status=status.HTTP_401_UNAUTHORIZED)
+
+	borrower.delete()
+	return Response('Item succsesfully delete!', status=status.HTTP_200_OK)
