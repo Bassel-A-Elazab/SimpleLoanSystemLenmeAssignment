@@ -48,3 +48,19 @@ def loanRequest_create(request,pk):
 		return Response("Successfully, Please waiting for an offer from one of the investors", status=status.HTTP_201_CREATED)
 	return Response("Sorry, Please Enter valid data", status=status.HTTP_400_BAD_REQUEST)
 
+
+# Display all loan request for investor to offer what they want to payment.
+@api_view(['GET'])
+def detailRequestsForInvestor(request,pk):
+	try:
+		investor = Investor.objects.get(id=pk)          #check of investor exist to validate passing data.
+	except ObjectDoesNotExist:
+		return Response("Sorry! You aren't register, Please create a new account", status=status.HTTP_401_UNAUTHORIZED)
+	
+	loan_request = LoanRequest.objects.filter(status="null")            # query all requests that isn't funded yet.
+	if(loan_request.exists()):                              
+		serializer = LoanRequestSerializer(loan_request, many=True)
+		return Response(serializer.data, status=status.HTTP_200_OK)         # response the all loan request to investor.
+	else:
+		return Response("There aren't loan requests yet", status=status.HTTP_404_NOT_FOUND)
+
