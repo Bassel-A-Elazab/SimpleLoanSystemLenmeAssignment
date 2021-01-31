@@ -10,4 +10,6 @@ urlpatterns = [
 
     path('investor/<str:pk>/list_loan', views.detailRequestsForInvestor, name="list-loan-request"),
     path('investor/<str:pk_investor>/offer/<str:pk_loan>', views.createOfferLoan, name="Offer-loan-request"),
+
+    path('admin/submitted/<str:pk_borrower>/<str:pk_loan>/<str:pk_investor>/completed', views.completedPaymentBorrower, name="complete-loan-request"),  
 ]
