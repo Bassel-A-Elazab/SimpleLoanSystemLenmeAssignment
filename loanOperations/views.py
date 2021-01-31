@@ -110,4 +110,69 @@ def detailRequestBorrowerOffers(request, pk_borrower, pk_loan):
 		return Response(querySet_to_list(investor_offer))
 	return Response("Sorry! There aren't any offers from investors yet \n Please, Waiting for investor offers", status=status.HTTP_404_NOT_FOUND)
 
+# To allow borrower for accepting  the investor's offer of the loan request.
+@api_view(['GET'])
+def acceptOffer(request, pk_borrower, pk_loan, pk_investor):
+	try:
+		borrower = Borrower.objects.get(id=pk_borrower)         # check if the borrower dosn't exisit.
+	except ObjectDoesNotExist:
+		return Response("Sorry! You aren't register, Please create a new account", status=status.HTTP_401_UNAUTHORIZED)
+
+	try:
+		investor = Investor.objects.get(id=pk_investor)                 #check of investor exist to validate passing data.
+	except ObjectDoesNotExist:
+		return Response("Sorry! Invalid investor choosing, Please, Choose the correct investor", status=status.HTTP_400_BAD_REQUEST)
+
+	try:
+		loanRequest = LoanRequest.objects.get(id=pk_loan)               # check if the loan request dosn't exisit of fundded or input unvalid data.
+	except ObjectDoesNotExist:
+		return Response("Sorry! Invalid loan request choosing, Please, Choose correct loan request", status=status.HTTP_400_BAD_REQUEST)
+
+	loanSubmit = LoanSubmit.objects.filter( Q(Id_borrower=pk_borrower),  Q(Id_loan_request=pk_loan))  # query the specific submitted loan
+	if(loanSubmit.exists()):                                # check if the loan request submitted before.
+		return Response("Sorry! This request fundedd before", status=status.HTTP_400_BAD_REQUEST)
+	
+	annual_rate_half = 0.075                # to calculate the half annual rate (6 months) paid.
+	payPeriods = []                         # assing the 6 period for payment.
+	
+	# To update balance
+	totalAmmountPayed = investor.balance - (loanRequest.amount+3) 
+	if(investor.balance >= totalAmmountPayed):                      #check if investor balance enough for (payment+lenme fee)
+		investor.balance = totalAmmountPayed
+
+	investorSerializer = InvestorSerializer(instance=investor, data=request.data,partial=True)
+	if investorSerializer.is_valid():
+		investorSerializer.save()
+
+	# To update status of request
+	loanRequest.status = "funded"                               # updated tha status of the loan request after borrower accpet the offer.
+	loanSerializer = LoanRequestSerializer(instance=loanRequest, data=request.data, partial=True)
+	if loanSerializer.is_valid():
+		loanSerializer.save()
+
+	amount_per_date = (totalAmmountPayed * annual_rate_half) / 6.0          # calculate the amount that will pay in each date for (6 months).
+	payPeriods = scheduled_date()
+
+	request.data["amount_per_date"] = amount_per_date
+	for i in range(6):
+		request.data["date"+str(i+1)] = payPeriods[i]
+	
+	loanSubmitSerializer = LoanSubmitSerializer(data=request.data)
+
+	if loanSubmitSerializer.is_valid():             
+		# Submitted offers
+		loanSubmitSerializer.validated_data["Id_borrower_id"] =  borrower.id
+		loanSubmitSerializer.validated_data["Id_investor_id"] =  investor.id
+		loanSubmitSerializer.validated_data["Id_loan_request_id"] =  loanRequest.id
+		loanSubmitSerializer.save()
+
+		# Schedule Payment for borrower
+		loanScheduleSerializer = LoanScheduleSerializer(data=request.data)
+		if(loanScheduleSerializer.is_valid()):
+			loanScheduleSerializer.validated_data["Id_submit_id"] = loanSubmitSerializer.data["id"]
+			loanScheduleSerializer.save()
+					# Delete a loan request from offers
+			loanRequest.delete()              
+			return Response("Scheduled payment created successfully, Please following your payments date", status=status.HTTP_201_CREATED)
+	return Response("Sorry, Please Enter valid data", status=status.HTTP_400_BAD_REQUEST)
 
