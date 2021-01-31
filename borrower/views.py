@@ -35,4 +35,16 @@ def borrowerDetail(request,pk):
 	except ObjectDoesNotExist:
 		return Response("Sorry! You aren't register, Please create a new account", status=status.HTTP_401_UNAUTHORIZED)
 	serializer = BorrowerSerializer(borrower, many=False)
-	return Response(serializer.data)
+	return Response(serializer.data, status=status.HTTP_200_OK)
+
+# Update borrower existing information
+@api_view(['POST'])
+def borrowerUpdate(request, pk):
+	try:
+		borrower = Borrower.objects.get(id=pk)
+	except ObjectDoesNotExist:
+		return Response("Sorry! You aren't register, Please create a new account", status=status.HTTP_401_UNAUTHORIZED)
+	serializer = BorrowerSerializer(instance=borrower, data=request.data)
+	if serializer.is_valid():
+		serializer.save()
+	return Response("Your information updated successfully", status=status.HTTP_200_OK)
