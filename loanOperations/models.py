@@ -11,3 +11,7 @@ class LoanRequest(models.Model):
     request_date = models.DateField(auto_now_add=True)
     status = models.CharField(max_length=100, default="null")
 
+# for handle all offers from investor to each borrower
+class LoanInvestorOffers(models.Model):
+    Id_investor = models.ForeignKey(Investor, on_delete=models.CASCADE)
+    Id_loan_request = models.ForeignKey(LoanRequest, on_delete=models.CASCADE)
