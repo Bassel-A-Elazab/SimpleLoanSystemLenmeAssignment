@@ -91,3 +91,23 @@ def createOfferLoan(request, pk_investor, pk_loan):
 		return Response(serializer.data)
 	return Response(serializer.errors)
 
+
+# to display all investor offers to the borrower's loan request.
+@api_view(['GET'])
+def detailRequestBorrowerOffers(request, pk_borrower, pk_loan):
+	try:
+		borrower = Borrower.objects.get(id=pk_borrower)             # check if the borrower dosn't exisit.
+	except ObjectDoesNotExist:
+		return Response("Sorry! You aren't register, Please create a new account", status=status.HTTP_401_UNAUTHORIZED)
+
+	try:
+		loanRequest = LoanRequest.objects.get(id=pk_loan)           # check if the loan request dosn't exisit of fundded or input unvalid data.
+	except ObjectDoesNotExist:
+		return Response("Sorry! There aren't loan requests yet", status=status.HTTP_404_NOT_FOUND)
+	
+	investor_offer = LoanInvestorOffers.objects.filter( Q(Id_loan_request=pk_loan)).values()
+	if investor_offer.exists():                 # display all offers from investor to borrower.
+		return Response(querySet_to_list(investor_offer))
+	return Response("Sorry! There aren't any offers from investors yet \n Please, Waiting for investor offers", status=status.HTTP_404_NOT_FOUND)
+
+
