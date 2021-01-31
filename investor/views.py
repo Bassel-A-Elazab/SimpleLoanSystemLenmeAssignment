@@ -37,4 +37,15 @@ def investorDetail(request,pk):
 	serializer = InvestorSerializer(investor, many=False)
 	return Response(serializer.data, status=status.HTTP_200_OK)
 
+# Update an existing borrower
+@api_view(['POST'])
+def investorUpdate(request, pk):
+	try:
+		investor = Investor.objects.get(id=pk)
+	except ObjectDoesNotExist:
+		return Response("Sorry! You aren't register, Please create a new account", status=status.HTTP_401_UNAUTHORIZED)
 
+	serializer = InvestorSerializer(instance=investor, data=request.data)
+	if serializer.is_valid():
+		serializer.save()
+	return Response("Your information updated successfully", status=status.HTTP_200_OK)
