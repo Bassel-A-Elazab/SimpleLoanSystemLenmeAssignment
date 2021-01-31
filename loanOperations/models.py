@@ -28,3 +28,15 @@ class LoanSubmit(models.Model):
     date4 = models.DateField()
     date5 = models.DateField()
     date6 = models.DateField()
+
+# for creating a scheduling for payment borrower across the specidied period (6 months) also to handle the completed re-payment for investor
+class LoanSchedule(models.Model):
+    Id_submit = models.ForeignKey(LoanSubmit, on_delete=models.CASCADE)
+    payment1 = models.BooleanField(default=False)
+    payment2 = models.BooleanField(default=False)
+    payment3 = models.BooleanField(default=False)
+    payment4 = models.BooleanField(default=False)
+    payment5 = models.BooleanField(default=False)
+    payment6 = models.BooleanField(default=False)
+
+
