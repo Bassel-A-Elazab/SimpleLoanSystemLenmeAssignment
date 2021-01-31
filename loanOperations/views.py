@@ -205,3 +205,48 @@ def getAllLoanSubmitted(request, pk_borrower):
 	if loanSubmit.exists():                 # display all offers from investor to borrower.
 		return Response(querySet_to_list(loanSubmit))
 	return Response("Sorry! There aren't loan submitted yet", status=status.HTTP_404_NOT_FOUND)
+
+# for updating the status of the loan requests and re-payment the money for investor.
+@api_view(['GET'])
+def completedPaymentBorrower(request,pk_borrower, pk_investor, pk_loan):
+	try:
+		borrower = Borrower.objects.get(id=pk_borrower)         # check if the borrower dosn't exisit.
+	except ObjectDoesNotExist:
+		return Response("Sorry! You aren't register, Please create a new account", status=status.HTTP_401_UNAUTHORIZED)
+
+	try:
+		investor = Investor.objects.get(id=pk_investor)                 #check of investor exist to validate passing data.
+	except ObjectDoesNotExist:
+		return Response("Sorry! Invalid investor choosing, Please, Choose the correct investor", status=status.HTTP_400_BAD_REQUEST)
+
+	try:
+		loanRequest = LoanRequest.objects.get(id=pk_loan)               # check if the loan request dosn't exisit of fundded or input unvalid data.
+	except ObjectDoesNotExist:
+		return Response("Sorry! Invalid loan request choosing, Please, Choose correct loan request", status=status.HTTP_400_BAD_REQUEST)
+	
+	try:
+		loanSubmit = LoanSubmit.objects.get( Q(Id_borrower=pk_borrower), Q(Id_investor=pk_investor), Q(Id_loan_request=pk_loan))
+	except ObjectDoesNotExist:
+		return Response("Sorry! Invalid submitted request", status=status.HTTP_400_BAD_REQUEST)
+	loanSchedule = LoanSchedule.objects.filter(Id_submit=loanSubmit.id).values()	# query the specific scheduled loan
+	loanSchedule = querySet_to_list(loanSchedule)
+	print("here")
+	for i in range(6):
+		if loanSchedule[0]["payment"+str(i+1)] == False:
+			return Response("Sorry! We can't complete the process, Payment dosn't complete", status=status.HTTP_400_BAD_REQUEST) 
+
+	loanRequest.status = "completed"                               # updated tha status of the loan request after borrower pay all the amount to investor.
+	investor.balance = investor.balance+loanRequest.amount*6
+	loanSerializer = LoanRequestSerializer(instance=loanRequest, data=request.data, partial=True)
+	if loanSerializer.is_valid():
+		loanSerializer.save()
+	
+	# updated investor balance after payments
+	investorSerializer = InvestorSerializer(instance=investor, data=request.data,partial=True)
+	if investorSerializer.is_valid():
+		investorSerializer.save()
+	
+	# deleted the submitted request after all borrower payment.
+	loanSubmit = LoanSubmit.objects.get( Q(Id_borrower=pk_borrower), Q(Id_investor=pk_investor), Q(Id_loan_request=pk_loan))
+	loanSubmit.delete()
+	return Response("Successfully your payment is completed", status=status.HTTP_200_OK)
