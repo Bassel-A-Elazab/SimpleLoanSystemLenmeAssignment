@@ -18,3 +18,11 @@ def apiOverview1(request):
 		}
 	return Response(api_urls)
 
+# Create a new Investor
+@api_view(['POST'])
+def investorCreate(request):
+	investor = InvestorSerializer(data=request.data)
+	if investor.is_valid():
+		investor.save()
+	return Response(investor.data)
+
