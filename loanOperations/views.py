@@ -250,3 +250,29 @@ def completedPaymentBorrower(request,pk_borrower, pk_investor, pk_loan):
 	loanSubmit = LoanSubmit.objects.get( Q(Id_borrower=pk_borrower), Q(Id_investor=pk_investor), Q(Id_loan_request=pk_loan))
 	loanSubmit.delete()
 	return Response("Successfully your payment is completed", status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def updatePaymentDate(request,pk_borrower, pk_loan, pk_investor,month):
+	try:
+		borrower = Borrower.objects.get(id=pk_borrower)         # check if the borrower dosn't exisit.
+	except ObjectDoesNotExist:
+		return Response("Sorry! You aren't register, Please create a new account", status=status.HTTP_401_UNAUTHORIZED)
+
+	try:
+		loanRequest = LoanRequest.objects.get(id=pk_loan)               # check if the loan request dosn't exisit of fundded or input unvalid data.
+	except ObjectDoesNotExist:
+		return Response("Sorry! Invalid loan request choosing, Please, Choose correct loan request", status=status.HTTP_400_BAD_REQUEST)
+
+	try:
+		loanSubmit = LoanSubmit.objects.get( Q(Id_borrower=pk_borrower), Q(Id_loan_request=pk_loan), Q(Id_investor=pk_investor))
+	except ObjectDoesNotExist:
+		return Response("Sorry! Invalid submitted request", status=status.HTTP_400_BAD_REQUEST)
+	
+	print(loanSubmit.id)
+	loanSchedule = LoanSchedule.objects.get(Id_submit=loanSubmit.id)
+	request.data["payment"+str(month)] = True
+	serializer = LoanScheduleSerializer(instance=loanSubmit, data=request.data)
+	if serializer.is_valid():
+		serializer.save()
+		return Response("Your information updated successfully", status=status.HTTP_200_OK)
+	return Response("Sorry, Please Enter valid data", status=status.HTTP_400_BAD_REQUEST)
