@@ -18,3 +18,13 @@ def apiOverview(request):
 		'Delete':'/borrower-delete/<str:pk>/',
 		}
 	return Response(api_urls)
+
+# Create a new Borrower
+@api_view(['POST'])
+def borrowerCreate(request):
+	serializer = BorrowerSerializer(data=request.data)
+	if serializer.is_valid():
+		serializer.save()
+	return Response("Congratulation to Lenme", status=status.HTTP_201_CREATED)
+
+
