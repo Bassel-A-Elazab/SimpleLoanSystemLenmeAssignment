@@ -27,4 +27,12 @@ def borrowerCreate(request):
 		serializer.save()
 	return Response("Congratulation to Lenme", status=status.HTTP_201_CREATED)
 
-
+# Detail Borrower information
+@api_view(['GET'])
+def borrowerDetail(request,pk):
+	try:
+		borrower = Borrower.objects.get(id=pk)
+	except ObjectDoesNotExist:
+		return Response("Sorry! You aren't register, Please create a new account", status=status.HTTP_401_UNAUTHORIZED)
+	serializer = BorrowerSerializer(borrower, many=False)
+	return Response(serializer.data)
