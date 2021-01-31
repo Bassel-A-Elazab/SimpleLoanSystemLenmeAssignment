@@ -68,6 +68,10 @@ def detailRequestsForInvestor(request,pk):
 # Creates new offer from investors to the borrower's loan requests.
 @api_view(['GET'])
 def createOfferLoan(request, pk_investor, pk_loan):
+	
+	loanSubmit = LoanSubmit.objects.filter( Q(Id_investor=pk_investor),  Q(Id_loan_request=pk_loan))  # query the specific submitted loan
+	if(loanSubmit.exists()):                                # check if the loan request submitted before.
+		return Response("Sorry! This request fundedd before", status=status.HTTP_400_BAD_REQUEST)
 
 	investorOffer = LoanInvestorOffers.objects.filter( Q(Id_investor=pk_investor),  Q(Id_loan_request=pk_loan))    # check if you resubmit the same offer.
 	if(investorOffer.exists()):
@@ -199,5 +203,5 @@ def getAllLoanSubmitted(request, pk_borrower):
 
 	loanSubmit = LoanSubmit.objects.filter( Q(Id_borrower=pk_borrower)).values()
 	if loanSubmit.exists():                 # display all offers from investor to borrower.
-		return Response(querySet_to_list(investor_offer))
+		return Response(querySet_to_list(loanSubmit))
 	return Response("Sorry! There aren't loan submitted yet", status=status.HTTP_404_NOT_FOUND)
