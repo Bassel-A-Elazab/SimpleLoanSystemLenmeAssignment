@@ -64,3 +64,30 @@ def detailRequestsForInvestor(request,pk):
 	else:
 		return Response("There aren't loan requests yet", status=status.HTTP_404_NOT_FOUND)
 
+
+# Creates new offer from investors to the borrower's loan requests.
+@api_view(['GET'])
+def createOfferLoan(request, pk_investor, pk_loan):
+
+	investorOffer = LoanInvestorOffers.objects.filter( Q(Id_investor=pk_investor),  Q(Id_loan_request=pk_loan))    # check if you resubmit the same offer.
+	if(investorOffer.exists()):
+		return Response("Sorry! You offered this request before", status=status.HTTP_400_BAD_REQUEST)
+
+	try:
+		investor = Investor.objects.get(id=pk_investor)     # check if unauthorized investor offer payment to borrower.
+	except ObjectDoesNotExist:
+		return Response("Sorry! You aren't register, Please create a new account", status=status.HTTP_401_UNAUTHORIZED)
+
+	try:
+		loan_request = LoanRequest.objects.get(id=pk_loan)      # chek if the loan dosn't exisit or investor enter valid data.
+	except ObjectDoesNotExist:
+		return Response("Sorry! Invalid loan request, Please enter valid loan request", status=status.HTTP_400_BAD_REQUEST)
+	
+	serializer = LoanInvestoroffersSerializer(data=request.data)
+	if serializer.is_valid():                           # save the investor with offering the loan request to able borrower to see it.
+		serializer.validated_data["Id_investor_id"] =  investor.id
+		serializer.validated_data["Id_loan_request_id"] =  loan_request.id
+		serializer.save()
+		return Response(serializer.data)
+	return Response(serializer.errors)
+
